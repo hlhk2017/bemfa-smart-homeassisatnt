@@ -1,0 +1,35 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "巴法智能配置",
+        "data": {
+          "user": "巴法智能用户ID",
+          "scan_interval": "数据扫描间隔 (秒)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "巴法智能选项",
+        "data": {
+          "scan_interval": "数据扫描间隔 (秒)",
+          "ac_name": "选择要配置的空调"
+        },
+        "description": "在这里可以配置全局选项和为特定空调关联外部传感器。"
+      },
+      "link_sensor": {
+        "title": "关联温度传感器到 {ac_name}",
+        "data": {
+          "temp_sensor_entity_id": "选择温度传感器实体"
+        },
+        "description": "请选择一个温度传感器实体，其状态将被用作 {ac_name} 的当前温度。"
+      }
+    },
+    "error": {
+      "no_ac_selected": "请先选择一个空调设备再进行关联。"
+    }
+  }
+}

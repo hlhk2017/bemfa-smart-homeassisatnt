@@ -1,3 +1,4 @@
+# bemfa_smart/climate.py
 """巴法智能空调设备的实现"""
 
 from homeassistant.components.climate import (
@@ -20,8 +21,10 @@ from .const import (
     ATTR_ON,
     ATTR_TEMPERATURE
 )
+# 这里不再从 .const 导入 CONF_TEMP_SENSOR_ENTITY_ID
+# from .config_flow import CONF_TEMP_SENSOR_ENTITY_ID # 也不从config_flow导入，直接使用字符串键
+
 from .base_device import BemfaSmartEntity
-from .config_flow import CONF_TEMP_SENSOR_ENTITY_ID # 导入新增的常量
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -57,9 +60,8 @@ class BemfaAirConditioner(BemfaSmartEntity, ClimateEntity):
         self._internal_target_temperature = 25
         self._internal_fan_mode = "low"
 
-        # 从配置项的选项中获取关联的温度传感器实体ID
-        # 键是设备的topic，值是传感器实体ID
         linked_sensors = config_entry.options.get("linked_sensors", {})
+        # 直接使用字符串 "temp_sensor_entity_id" 作为键，因为它不再是导入的常量
         self._current_temp_sensor_entity_id = linked_sensors.get(device_data['topic'])
 
         if not self._current_temp_sensor_entity_id:
@@ -115,7 +117,6 @@ class BemfaAirConditioner(BemfaSmartEntity, ClimateEntity):
         self._attr_target_temperature = self._internal_target_temperature
         self._attr_fan_mode = self._internal_fan_mode
 
-        # 从用户配置的传感器获取实际温度
         if self._current_temp_sensor_entity_id:
             try:
                 if self.hass:
