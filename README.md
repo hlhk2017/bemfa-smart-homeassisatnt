@@ -1,5 +1,9 @@
+好的，现在为您生成一份更新后的 `README.md` 文件。这份 `README.md` 将包含所有最新的功能描述，特别是针对风扇多档位可配置的更新，以及安装和配置说明。
+
+---
+
 # 巴法智能 Home Assistant 集成 (Bemfa Smart Home Assistant Integration)
-## 巴法云设备反向接入homeassistant
+
 这是一个为 Home Assistant 设计的自定义集成，用于连接和控制巴法智能设备。它允许您将巴法智能平台上的设备（如灯光、空调、风扇、窗帘、传感器和各类开关）集成到 Home Assistant 中，并通过 Home Assistant 的界面进行控制和自动化。
 
 ## 特性 (Features)
@@ -7,7 +11,7 @@
 * **设备支持**:
     * **灯光 (Light)**: 开/关控制.
     * **空调 (Climate)**: 开/关、模式（自动、制冷、制热、送风、除湿）、目标温度、风速（低、中、高）控制，并可在配置中关联外部温度传感器作为当前温度显示.
-    * **风扇 (Fan)**: 开/关、三档速度控制（低、中、高）、摇头控制.
+    * **风扇 (Fan)**: 开/关、多档速度控制（1-5档可配置）、摇头控制.
     * **窗帘 (Cover)**: 开/关、停止、设置具体位置（百分比）.
     * **传感器 (Sensor)**: 温度、湿度等数据显示.
     * **开关 (Switch)**:
@@ -17,6 +21,7 @@
 * **数据刷新**: 通过设置扫描间隔，定期从巴法智能云平台获取设备最新状态.
 * **配置流程**: 提供 Home Assistant 标准的配置流程 (Config Flow) 进行设置，无需手动编辑 YAML 文件.
 * **外部传感器关联**: 支持通过 Home Assistant UI 为空调设备灵活关联已有的温度传感器，使其显示真实环境温度.
+* **风扇挡位数配置**: 支持通过 Home Assistant UI 为每个风扇单独配置其支持的最大挡位数（1-5档），以适应不同型号风扇的需求.
 
 ## 安装 (Installation)
 
@@ -51,24 +56,22 @@
 4.  根据提示输入您的巴法智能 **用户ID (User ID)**.
 5.  您还可以配置 **扫描间隔 (Scan Interval)**，默认是 30 秒，范围为 1 到 60 秒.
 6.  点击 **“提交 (Submit)”** 完成初始配置。
+7. userid的获取： 打开巴法云网页，f12调出开发者模式。然后如下图：
+![87547fd6e4b6c088656ea5c508b2c34](https://github.com/user-attachments/assets/c3f2b107-d4b5-49cd-8970-214322caddea)
 
 集成成功添加后，您的巴法智能设备将自动出现在 Home Assistant 中。
 
-userid的获取： 打开巴法云网页，f12调出开发者模式。然后如下图：
-![87547fd6e4b6c088656ea5c508b2c34](https://github.com/user-attachments/assets/c3f2b107-d4b5-49cd-8970-214322caddea)
+### 选项配置 (Options Configuration)
 
-
-### 选项配置及关联外部温度传感器 (Options Configuration & Linking External Temperature Sensors)
-
-您可以管理集成的选项，包括为空调设备关联外部温度传感器：
+您可以在集成设置中管理全局选项以及特定设备的配置：
 
 1.  进入 **“设置 (Settings)”** -> **“设备与服务 (Devices & Services)”**。
 2.  找到已配置的 **“巴法智能 (Bemfa Smart)”** 集成卡片，点击 **“配置 (Configure)”** 按钮。
-3.  在出现的选项界面中，您可以：
-    * 调整 **“数据扫描间隔 (Scan Interval)”**.
-    * 在 **“选择要配置的空调 (Select AC to configure)”** 下拉菜单中，选择一个巴法智能空调设备.
-4.  选择空调后，点击 **“提交 (Submit)”**，您将进入一个新的步骤，可以为该空调选择一个 Home Assistant 中已有的温度传感器实体.
-5.  选择传感器后，再次点击 **“提交 (Submit)”**，您将返回到主选项界面，可以继续为其他空调配置传感器，或选择 **“不关联传感器 / 完成配置”** 来结束.
+3.  您将看到一个主菜单，可以选择以下操作：
+    * **全局设置 (Global Settings)**: 调整 **“数据扫描间隔 (Scan Interval)”**.
+    * **配置空调温度传感器 (Configure AC Temperature Sensors)**: 进入子菜单，为每个空调设备选择一个 Home Assistant 中已有的温度传感器实体。配置完成后，您可以选择继续配置其他空调或返回主菜单.
+    * **配置风扇挡位数量 (Configure Fan Speed Levels)**: 进入子菜单，为每个风扇设备单独设置其支持的最大挡位数（1-5档）。配置完成后，您可以选择继续配置其他风扇或返回主菜单.
+    * **完成并保存配置 (Finish and Save Configuration)**: 保存所有修改并退出配置流程。
 
 ## 支持的 Home Assistant 版本 (Supported Home Assistant Versions)
 
