@@ -1,3 +1,4 @@
+# bemfa_smart/fan.py
 import logging
 
 from homeassistant.components.fan import (
@@ -8,10 +9,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, DEVICE_TYPE_FAN
+from .const import DOMAIN, DEVICE_TYPE_FAN, CONF_FAN_SPEED_LEVELS, DEFAULT_FAN_SPEED_LEVELS # 导入旧常量
+from .config_flow import CONF_FAN_SPECIFIC_SPEED_LEVELS # 导入新常量
 from .base_device import BemfaSmartEntity
 
-_LOGGER = logging.getLogger(__name__) # 初始化日志记录器
+_LOGGER = logging.getLogger(__name__)
 
 
 class BemfaFan(BemfaSmartEntity, FanEntity):
@@ -20,7 +22,23 @@ class BemfaFan(BemfaSmartEntity, FanEntity):
     def __init__(self, coordinator, config_entry, device_data):
         """初始化风扇设备"""
         super().__init__(coordinator, config_entry, device_data)
-        self._attr_percentage_step = 20 # 100% / 5挡 = 20% 每挡
+        
+        # 尝试从配置中获取当前风扇的特定挡位数
+        fan_levels_by_topic = config_entry.options.get("fan_levels_by_topic", {})
+        self._max_fan_levels = fan_levels_by_topic.get(
+            device_data['topic'], # 使用当前风扇的topic作为键
+            DEFAULT_FAN_SPEED_LEVELS # 如果未找到，则使用默认值
+        )
+        
+        # 确保 _max_fan_levels 至少为1，避免除零错误
+        if self._max_fan_levels < 1:
+            self._max_fan_levels = DEFAULT_FAN_SPEED_LEVELS
+            _LOGGER.warning("Fan %s configured with invalid speed levels (%s), defaulting to %s.",
+                            self.name, fan_levels_by_topic.get(device_data['topic']), self._max_fan_levels)
+
+        # 计算每个挡位的百分比步长
+        self._attr_percentage_step = 100 / self._max_fan_levels # 确保 _max_fan_levels > 0 
+        
         self._attr_supported_features = (
             FanEntityFeature.SET_SPEED |
             FanEntityFeature.OSCILLATE |
@@ -40,46 +58,35 @@ class BemfaFan(BemfaSmartEntity, FanEntity):
 
         new_speed_level = msg.get('level')
 
-        if new_is_on: # 如果风扇根据API是开启的
-            if new_speed_level is None: # 并且API没有报告具体的挡位
-                if self._attr_percentage > 0: # 如果当前实体有记录的百分比
-                    new_speed_level = self._percentage_to_level(self._attr_percentage)
-                    if new_speed_level == 0:
-                        new_speed_level = 1
-                else:
-                    new_speed_level = 1
-
-            if new_speed_level == 0 and new_is_on:
+        if new_is_on:
+            if new_speed_level is None or new_speed_level == 0:
                 new_speed_level = 1
-
+            new_speed_level = min(new_speed_level, self._max_fan_levels)
+            
             self._attr_percentage = self._level_to_percentage(new_speed_level)
             self._attr_oscillating = msg.get('shake', 0) == 1
-        else: # 如果风扇根据API是关闭的
+        else:
             self._attr_percentage = 0
             self._attr_oscillating = False
 
         self._attr_is_on = new_is_on
 
     def _level_to_percentage(self, level):
-        """将挡位 (0-5) 转换为百分比 (0-100)"""
+        """将挡位 (0-max_levels) 转换为百分比 (0-100)"""
         if level == 0:
             return 0
-        return min(100, max(0, level * self._attr_percentage_step))
+        return min(100, max(0, round(level * (100 / self._max_fan_levels))))
+
 
     def _percentage_to_level(self, percentage):
-        """将百分比 (0-100) 转换为挡位 (0-5)"""
+        """将百分比 (0-100) 转换为挡位 (0-max_levels)"""
         if percentage == 0:
             return 0
-        if percentage > 80:
-            return 5
-        elif percentage > 60:
-            return 4
-        elif percentage > 40:
-            return 3
-        elif percentage > 20:
-            return 2
-        else:
-            return 1
+        
+        level = round(percentage / (100 / self._max_fan_levels))
+        
+        return max(1, min(level, self._max_fan_levels))
+
 
     @property
     def device_type(self):
@@ -94,17 +101,16 @@ class BemfaFan(BemfaSmartEntity, FanEntity):
     @property
     def speed_count(self) -> int:
         """返回支持的速度档位数量（用于百分比转换）"""
-        return 100
+        return self._max_fan_levels
 
     async def async_turn_on(self, percentage: int | None = None, preset_mode: str | None = None, **kwargs):
         """开启风扇，如果指定了百分比则设置速度"""
         _LOGGER.debug("BemfaFan async_turn_on called for %s with percentage: %s", self.name, percentage)
         if percentage is None:
-            # 如果没有指定百分比，默认开启到最低挡位（20%），或者如果风扇之前有速度且不是0，则恢复该速度
             if self.percentage is None or self.percentage == 0:
-                target_percentage = self._attr_percentage_step # 开启到最低速度
+                target_percentage = self._level_to_percentage(1)
             else:
-                target_percentage = self.percentage # 保持当前速度如果已设置且不为0
+                target_percentage = self.percentage
             _LOGGER.debug("未指定百分比，默认开启到/恢复到百分比: %s", target_percentage)
         else:
             target_percentage = percentage
@@ -115,7 +121,7 @@ class BemfaFan(BemfaSmartEntity, FanEntity):
     async def async_turn_off(self, **kwargs):
         """关闭风扇"""
         _LOGGER.debug("BemfaFan async_turn_off called for %s", self.name)
-        await self.async_set_percentage(0) # 将百分比设置为0以关闭风扇
+        await self.async_set_percentage(0)
 
     async def async_set_percentage(self, percentage: int):
         """设置风扇百分比速度 (包含开关功能)"""
@@ -123,34 +129,29 @@ class BemfaFan(BemfaSmartEntity, FanEntity):
         topic = self.device_data['topic']
         level = self._percentage_to_level(percentage)
 
-        # 根据百分比确定发送 "on" 或 "off"
         if percentage == 0:
             msg = "off"
         else:
-            # 开启或设置速度时，保持摇头状态
             shake_state = 1 if self._attr_oscillating else 0
             msg = f"on#{level}#{shake_state}"
 
         await self.coordinator.async_send_command(topic, msg)
 
-        # 更新实体内部状态
         self.device_data['msg']['on'] = (percentage > 0)
         self.device_data['msg']['level'] = level
         self._attr_percentage = self._level_to_percentage(level)
-        self._attr_is_on = (percentage > 0) # 根据百分比更新开关状态
+        self._attr_is_on = (percentage > 0)
         self.async_write_ha_state()
 
     async def async_oscillate(self, oscillating: bool):
         """设置风扇摇头"""
         _LOGGER.debug("BemfaFan async_oscillate called for %s with oscillating: %s", self.name, oscillating)
         topic = self.device_data['topic']
-        # 确保风扇开启时才发送摇头命令，并使用当前速度
+        
         if not self.is_on:
-            # 如果风扇未开启，自动开启到最低挡位并摇头
             _LOGGER.debug("风扇未开启，自动开启到最低挡位并摇头。")
-            await self.async_set_percentage(self._attr_percentage_step)
-            # async_set_percentage 会更新状态，所以我们只需要用更新后的状态再次发送摇头命令
-            current_level = self._percentage_to_level(self._attr_percentage_step)
+            await self.async_set_percentage(self._level_to_percentage(1))
+            current_level = 1
         else:
             current_level = self._percentage_to_level(self.percentage) if self.percentage is not None else 1
 
