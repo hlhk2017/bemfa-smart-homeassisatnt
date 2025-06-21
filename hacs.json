@@ -1,0 +1,5 @@
+{
+  "name": "巴法云反向接入HA",
+  "render_readme": true,
+  "homeassistant": "2025.4.2"
+}
