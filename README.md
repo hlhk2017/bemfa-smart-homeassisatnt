@@ -57,6 +57,7 @@
 5.  您还可以配置 **扫描间隔 (Scan Interval)**，默认是 30 秒，范围为 1 到 60 秒.
 6.  点击 **“提交 (Submit)”** 完成初始配置。
 7. userid的获取： 打开巴法云网页，f12调出开发者模式。然后如下图：
+
 ![87547fd6e4b6c088656ea5c508b2c34](https://github.com/user-attachments/assets/c3f2b107-d4b5-49cd-8970-214322caddea)
 
 集成成功添加后，您的巴法智能设备将自动出现在 Home Assistant 中。
