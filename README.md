@@ -1,5 +1,5 @@
 # 巴法智能 Home Assistant 集成 (Bemfa Smart Home Assistant Integration)
-
+## 巴法云设备反向接入homeassistant
 这是一个为 Home Assistant 设计的自定义集成，用于连接和控制巴法智能设备。它允许您将巴法智能平台上的设备（如灯光、空调、风扇、窗帘、传感器和各类开关）集成到 Home Assistant 中，并通过 Home Assistant 的界面进行控制和自动化。
 
 ## 特性 (Features)
