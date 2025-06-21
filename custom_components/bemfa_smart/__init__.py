@@ -1,3 +1,4 @@
+# bemfa_smart/__init__.py
 """巴法智能集成的初始化"""
 
 from homeassistant.config_entries import ConfigEntry
@@ -6,7 +7,6 @@ import logging
 
 from .const import DOMAIN, CONF_USER, CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
 from .coordinator import BemfaSmartCoordinator
-from .config_flow import BemfaSmartConfigFlow
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,22 +21,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     user = entry.data[CONF_USER]
     scan_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
 
-    # 创建数据协调器
     coordinator = BemfaSmartCoordinator(
         hass,
         user,
         scan_interval
     )
 
-    # 初始化协调器
     await coordinator.async_config_entry_first_refresh()
 
-    # 存储协调器到Hass数据中
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
-    # 设置各个平台
-    # 添加 "switch" 平台
     await hass.config_entries.async_forward_entry_setups(entry, ["light", "climate", "fan", "cover", "sensor", "switch"])
 
     return True
@@ -44,7 +39,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     """卸载配置项"""
-    # 添加 "switch" 平台到卸载列表
     unload_ok = await hass.config_entries.async_unload_platforms(entry, ["light", "climate", "fan", "cover", "sensor", "switch"])
     if unload_ok:
         coordinator = hass.data[DOMAIN][entry.entry_id]
