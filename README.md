@@ -1,9 +1,7 @@
-好的，现在为您生成一份更新后的 `README.md` 文件。这份 `README.md` 将包含所有最新的功能描述，特别是针对风扇多档位可配置的更新，以及安装和配置说明。
 
----
 
 # 巴法智能 Home Assistant 集成 (Bemfa Smart Home Assistant Integration)
-
+## 巴法云 反向接入homeassistant
 这是一个为 Home Assistant 设计的自定义集成，用于连接和控制巴法智能设备。它允许您将巴法智能平台上的设备（如灯光、空调、风扇、窗帘、传感器和各类开关）集成到 Home Assistant 中，并通过 Home Assistant 的界面进行控制和自动化。
 
 ## 特性 (Features)
